@@ -90,8 +90,33 @@ static struct page *split_page(struct phys_mem_pool *pool, u64 order,
 			       struct page *page)
 {
 	// <lab2>
-	struct page *split_page = NULL;
-	return split_page;
+	
+
+	if (page->allocated == 1 || page->order <= order || page->order == 0) {
+		return page;
+	}
+
+	if(page->order - order > 1) {
+		page = split_page(pool, order + 1, page);
+	}
+
+	struct free_list* origin_order_free_list = &(pool->free_lists[page->order]);
+	struct free_list* split_order_free_list  = &(pool->free_lists[page->order-1]);
+
+	page->order--;
+	origin_order_free_list->nr_free--;
+	list_del(&page->node);
+
+
+	struct page* buddy = get_buddy_chunk(pool, page);
+	buddy->order = page->order;
+	buddy->allocated = 0;
+
+	split_order_free_list->nr_free += 2;
+	list_add(&page->node, &split_order_free_list);
+	list_add(&buddy->node, &split_order_free_list);
+
+	return page;
 	// </lab2>
 }
 
@@ -106,9 +131,30 @@ static struct page *split_page(struct phys_mem_pool *pool, u64 order,
 struct page *buddy_get_pages(struct phys_mem_pool *pool, u64 order)
 {
 	// <lab2>
-	struct page *page = NULL;
+	int list_order = order;
+
+	while(list_order < BUDDY_MAX_ORDER && pool->free_lists[list_order].nr_free == 0) {
+		list_order++;
+	}
+
+	if (list_order == BUDDY_MAX_ORDER) {
+		return NULL;
+	}
+
+	struct page *page = list_entry(pool->free_lists[list_order].free_list.next, struct page, node);
+	page = split_page(pool, order, page);
+
+	list_del(&page->node);
+	pool->free_lists[page->order].nr_free--;
+
+	struct page *page_split = page;
+	for(int i = 0; i < (1 << page->order); ++i) {
+		page_split->allocated = 1;
+		page_split++;
+	}
 
 	return page;
+
 	// </lab2>
 }
 
