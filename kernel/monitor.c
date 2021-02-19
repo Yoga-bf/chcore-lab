@@ -31,18 +31,20 @@ int stack_backtrace()
 
 	// Your code here.
 
-	u64* fp = (u64* )(*((u64*)read_fp()));
-	u64* args;
-	while(*fp != 0) {
-		printk("LR %llx FP %llx\n", *(fp+1), fp);
-		printk("Args: ");
-		args = fp - 2;
-		for(int i = 5; i > 0; --i) {
-			printk("%llx ", *args);
-			args++;
+	u64* fp = (u64* )(*((u64* )read_fp())); //ignore stack_backtrace func. itself
+	// u64* fp = (u64* )read_fp();
+	u64* argp;
+	while(*fp != 0){
+		printk("LR %llx FP %llx ", *(fp+1), fp);
+		printk("Args ");
+		argp = fp - 2;//start addr of args
+		for(int i = 5;i > 0;i--){
+			printk("%llx ", *argp);
+			argp++;
 		}
 		printk("\n");
-		fp = (u64*)(*fp);
+		fp = (u64* )(*fp);//backtrace to parent func's fp
 	}
+	
 	return 0;
 }

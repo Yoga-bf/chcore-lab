@@ -124,13 +124,14 @@ static int printk_write_num(char **out, long long i, int base, int sign,
 	*s = '\0';
 	while(u){
 		t = u % base;
-		if(t < 10){
+		if(t < 10){ // base less than 10
 			*--s = '0' + t;
-		} else {
+		}else{ // e.g. hex 
 			*--s = letbase + (t - 10);
 		}
 		u /= base;
 	}
+	// finish todo
 
 	if (neg) {
 		if (width && (flags & PAD_ZERO)) {
