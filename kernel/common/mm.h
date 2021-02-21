@@ -24,6 +24,9 @@ void arch_mm_init(void);
 void mm_init();
 void set_page_table(paddr_t pgtbl);
 
+void map_kernel_space(vaddr_t va, paddr_t pa, size_t len);
+void kernel_space_check(void);
+
 static inline bool is_user_addr(vaddr_t vaddr)
 {
 	return vaddr < KBASE;

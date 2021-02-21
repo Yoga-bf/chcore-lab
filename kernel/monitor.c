@@ -30,7 +30,6 @@ int stack_backtrace()
 	printk("Stack backtrace:\n");
 
 	// Your code here.
-
 	u64* fp = (u64* )(*((u64* )read_fp())); //ignore stack_backtrace func. itself
 	// u64* fp = (u64* )read_fp();
 	u64* argp;
@@ -45,6 +44,6 @@ int stack_backtrace()
 		printk("\n");
 		fp = (u64* )(*fp);//backtrace to parent func's fp
 	}
-	
+
 	return 0;
 }

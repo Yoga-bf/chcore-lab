@@ -84,7 +84,7 @@ static int set_pte_flags(pte_t * entry, vmr_prop_t flags, int kind)
  * alloc: if true, allocate a ptp when missing
  *
  */
-static int get_next_ptp(ptp_t * cur_ptp, u32 level, vaddr_t va,
+int get_next_ptp(ptp_t * cur_ptp, u32 level, vaddr_t va,
 			ptp_t ** next_ptp, pte_t ** pte, bool alloc)
 {
 	u32 index = 0;
@@ -165,40 +165,42 @@ int query_in_pgtbl(vaddr_t * pgtbl, vaddr_t va, paddr_t * pa, pte_t ** entry)
 	ptp_t *next_ptp = (ptp_t *)(pgtbl);
 	pte_t *pte;
 	int ret;
+	// level 0
+	if((ret = get_next_ptp(next_ptp, 0, va, &next_ptp, &pte, false)) < 0){
+		return ret;
+	}
 
-	//level 0
-	if((ret = get_next_ptp(next_ptp, 0, va, &next_ptp, &pte, false)) < 0) {
+	// level 1
+	if((ret = get_next_ptp(next_ptp, 1, va, &next_ptp, &pte, false)) < 0){
 		return ret;
 	}
-	
-	//level 1
-	if((ret = get_next_ptp(next_ptp, 1, va, &next_ptp, &pte, false)) < 0) {
-		return ret;
-	}
+	// If the pte points to paddr directly:
+	// It means total levels of page table is dynamic, which is not always 4.
 	if(ret == BLOCK_PTP){
-		*pa = virt_to_phys((vaddr_t)next_ptp) + GET_VA_OFFSET_L1(va);
+		*pa = virt_to_phys((vaddr_t) next_ptp) + GET_VA_OFFSET_L1(va);//offset=[0:30]
 		*entry = pte;
 		return 0;
 	}
 
-	//level 2
-	if((ret = get_next_ptp(next_ptp, 2, va, &next_ptp, &pte, false)) < 0) {
+	// level 2
+	if((ret = get_next_ptp(next_ptp, 2, va, &next_ptp, &pte, false)) < 0){
 		return ret;
 	}
 	if(ret == BLOCK_PTP){
-		*pa = virt_to_phys((vaddr_t)next_ptp) + GET_VA_OFFSET_L2(va);
+		*pa = virt_to_phys((vaddr_t) next_ptp) + GET_VA_OFFSET_L2(va);//offset=[0:21]
 		*entry = pte;
 		return 0;
 	}
 
-	if((ret = get_next_ptp(next_ptp, 3, va, &next_ptp, &pte, false)) < 0) {
+	// level 3
+	if((ret = get_next_ptp(next_ptp, 3, va, &next_ptp, &pte, false)) < 0){
 		return ret;
 	}
-
-	*pa = virt_to_phys((vaddr_t)next_ptp) + GET_VA_OFFSET_L3(va);
+	// must points to the paddr directly
+	*pa = virt_to_phys((vaddr_t) next_ptp) + GET_VA_OFFSET_L3(va);//offset=[0:12]
 	*entry = pte;
 	return 0;
-	
+
 	// </lab2>
 }
 
@@ -225,7 +227,6 @@ int map_range_in_pgtbl(vaddr_t * pgtbl, vaddr_t va, paddr_t pa,
 	pte_t *pte_0, *pte_1, *pte_2, *pte_3;
 	int ret;
 	size_t page_num = ROUND_UP(len, PAGE_SIZE) / PAGE_SIZE;
-
 	for(size_t i = 0;i < page_num;i++, va += PAGE_SIZE, pa += PAGE_SIZE){
 		if((ret = get_next_ptp(ptp_0, 0, va, &ptp_1, &pte_0, true)) < 0){
 			return ret;
