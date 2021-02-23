@@ -243,6 +243,8 @@ int map_range_in_pgtbl(vaddr_t * pgtbl, vaddr_t va, paddr_t pa,
 
 		set_pte_flags(pte_3, flags, USER_PTE);
 		pte_3->l3_page.pfn = pa >> PAGE_SHIFT;
+		pte_3->l3_page.is_valid = 1;
+		pte_3->l3_page.is_page = 1;
 	}
 
 	flush_tlb();
