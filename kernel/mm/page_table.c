@@ -250,6 +250,7 @@ int map_range_in_pgtbl(vaddr_t * pgtbl, vaddr_t va, paddr_t pa,
 	flush_tlb();
 	return 0;
 	//maybe it is right
+	//should do something about 3?
 	// </lab2>
 }
 
